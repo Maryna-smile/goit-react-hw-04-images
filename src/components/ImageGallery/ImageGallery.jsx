@@ -1,69 +1,75 @@
 import Notiflix from 'notiflix';
 import PropTypes from 'prop-types';
-import { Component } from 'react';
 import React from 'react';
+import { useState, useEffect } from 'react';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import { Button } from 'components/Button/Button';
 import { fetchPictures } from '../../helpers/api/api';
 import css from './ImageGallery.module.css';
 
-export class ImageGallery extends Component {
-  state = {
-    pictures: [],
-  };
+export const ImageGallery = ({
+  getMorePictures,
+  getBigImg,
+  toggleLoading,
+  page,
+  searchInput,
+}) => {
+  const [pictures, setPictures] = useState([]);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { searchInput, page, toggleLoading } = this.props;
-    if (prevProps.searchInput !== searchInput && searchInput) {
+  useEffect(() => {
+    if (searchInput) {
       toggleLoading();
       fetchPictures(searchInput)
         .then(hits => {
           if (hits.length === 0) {
             return Notiflix.Notify.info('Oops, we don`t have such photos');
           }
-          this.setState({
-            pictures: hits,
-          });
+          setPictures(hits);
         })
         .finally(() => toggleLoading());
     }
-    if (page !== prevProps.page && page !== 1) {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  useEffect(() => {
+    if (page !== 1) {
+      console.log(111);
       toggleLoading();
       fetchPictures(searchInput, page)
         .then(hits => {
-          this.setState(prevState => {
-            return {
-              pictures: [...prevState.pictures, ...hits],
-            };
+          setPictures(prevState => {
+            return [...prevState, ...hits];
           });
         })
-        .finally(() => toggleLoading());
+        .finally(() => {
+          toggleLoading();
+          console.log('hello');
+        });
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
-  render() {
-    return (
-      <div className={css.Container}>
-        <ul className={css.ImageGallery}>
-          {this.state.pictures.map(({ id, webformatURL, largeImageURL }) => {
-            return (
-              <ImageGalleryItem
-                key={id}
-                imgS={webformatURL}
-                imgL={largeImageURL}
-                getBigImg={this.props.getBigImg}
-              />
-            );
-          })}
-        </ul>
+  return (
+    <div className={css.Container}>
+      <ul className={css.ImageGallery}>
+        {pictures.map(({ id, webformatURL, largeImageURL }) => {
+          return (
+            <ImageGalleryItem
+              key={id}
+              imgS={webformatURL}
+              imgL={largeImageURL}
+              getBigImg={getBigImg}
+            />
+          );
+        })}
+      </ul>
 
-        {this.state.pictures.length >= 12 && this.state.pictures.length > 0 && (
-          <Button getMorePictures={this.props.getMorePictures} />
-        )}
-      </div>
-    );
-  }
-}
+      {pictures.length >= 12 && pictures.length > 0 && (
+        <Button getMorePictures={getMorePictures} />
+      )}
+    </div>
+  );
+};
 
 ImageGallery.propTypes = {
   toggleLoading: PropTypes.func,

@@ -1,88 +1,67 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { Hearts } from 'react-loader-spinner';
 import { Searchbar } from '../Searchbar/Searchbar';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { Modal } from '../Modal/Modal';
 import css from './App.module.css';
 
-export default class App extends Component {
-  state = {
-    searchInput: '',
-    page: 1,
-    isLoading: false,
-    error: '',
-    showModal: false,
-    bigImg: '',
+export const App = () => {
+  const [searchInput, setSearchInput] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [bigImg, setBigImg] = useState('');
+
+  const toggleModal = () => {
+    setShowModal(prevState => !prevState);
   };
 
-  getBigImg = e => {
-    this.setState({
-      bigImg: e.currentTarget.dataset.large,
-    });
-    this.toggleModal();
+  const getBigImg = e => {
+    setBigImg(e.currentTarget.dataset.large);
+    toggleModal();
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleLoading = () => {
+    setIsLoading(prevState => !prevState);
   };
 
-  toggleLoading = () => {
-    this.setState(prevState => {
-      return {
-        isLoading: !prevState.isLoading,
-      };
-    });
+  const getPictures = value => {
+    setSearchInput(value);
+    setPage(1);
   };
 
-  getPictures = value => {
-    this.setState({
-      searchInput: value,
-      page: 1,
+  const getMorePictures = async () => {
+    setPage(prevState => {
+      return prevState + 1;
     });
   };
 
-  getMorePictures = async () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
-  };
+  return (
+    <section>
+      <Searchbar getPictures={getPictures} />
+      <div className={css.loader}>
+        {isLoading && (
+          <Hearts
+            height="120"
+            width="150"
+            color="#0a8fb1"
+            ariaLabel="hearts-loading"
+            wrapperStyle={{}}
+            wrapperClass=""
+            visible={true}
+          />
+        )}
+      </div>
 
-  render() {
-    const { showModal, isLoading, bigImg } = this.state;
-    return (
-      <section>
-        <Searchbar
-          getPictures={this.getPictures}
-          getInputValue={this.getInputValue}
-        />
-        <div className={css.loader}>
-          {isLoading && (
-            <Hearts
-              height="120"
-              width="150"
-              color="#0a8fb1"
-              ariaLabel="hearts-loading"
-              wrapperStyle={{}}
-              wrapperClass=""
-              visible={true}
-            />
-          )}
-        </div>
+      <ImageGallery
+        toggleLoading={toggleLoading}
+        page={page}
+        getMorePictures={getMorePictures}
+        searchInput={searchInput}
+        getBigImg={getBigImg}
+      />
 
-        <ImageGallery
-          toggleLoading={this.toggleLoading}
-          page={this.state.page}
-          getMorePictures={this.getMorePictures}
-          searchInput={this.state.searchInput}
-          getBigImg={this.getBigImg}
-        />
-
-        {showModal && <Modal url={bigImg} toggleModal={this.toggleModal} />}
-      </section>
-    );
-  }
-}
+      {showModal && <Modal url={bigImg} toggleModal={toggleModal} />}
+    </section>
+  );
+};
